@@ -5,17 +5,20 @@ local uis = game:GetService("UserInputService")
 local pps = game:GetService("ProximityPromptService")
 local cam = workspace.CurrentCamera
 
+----------------------------------------------------------------
+-- ⚠️ DİKKAT: BURAYA KENDİ KEYS.TXT RAW LİNKİNİ YAPIŞTIR! ⚠️
+local keysLink = "https://raw.githubusercontent.com/AceCrtr/AceV2.lua/refs/heads/main/keys.txt"
+----------------------------------------------------------------
+
 local spd = 250
-local tpDist = 50
 local auraMenzil = 30
-local hizliKosmaGucu = 100 
-local states = {fly = false, noclip = false, hitbox = false, aura = false, infJump = false, speed = false, fastE = false, open = true}
+local states = {fly = false, noclip = false, hitbox = false, aura = false, infJump = false, fastE = false, autoCollect = false, open = true}
 local bv
 
 local pm = require(p:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
 local cm = pm:GetControls()
 
-local guiName = "AceV2Gui"
+local guiName = "AceV2PremiumGui"
 local targetFolder = gethui and gethui() or (pcall(function() return cg.Name end) and cg or p:WaitForChild("PlayerGui"))
 if targetFolder:FindFirstChild(guiName) then targetFolder[guiName]:Destroy() end
 
@@ -23,67 +26,78 @@ local sg = Instance.new("ScreenGui", targetFolder)
 sg.Name = guiName
 sg.ResetOnSpawn = false 
 
-----------------------------------------------------------------
--- ANA MENÜ (BAŞLANGIÇTA GİZLİ)
-----------------------------------------------------------------
+-- RENK PALETİ
+local bgKoyu = Color3.fromRGB(15, 15, 18)
+local bgAcik = Color3.fromRGB(25, 25, 30)
+local goldRenk = Color3.fromRGB(255, 215, 0)
+local beyazText = Color3.new(1, 1, 1)
+local siyahText = Color3.new(0, 0, 0)
+
+-- ANA MENÜ
 local mf = Instance.new("Frame", sg)
-mf.Size, mf.Position, mf.BackgroundColor3, mf.BorderSizePixel = UDim2.new(0, 310, 0, 285), UDim2.new(0.5, -155, 0.08, 0), Color3.fromRGB(20, 20, 25), 0
+mf.Size, mf.Position, mf.BackgroundColor3, mf.BorderSizePixel = UDim2.new(0, 320, 0, 270), UDim2.new(0.5, -160, 0.08, 0), bgKoyu, 0
 mf.Active = false 
 mf.Visible = false 
-Instance.new("UICorner", mf).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", mf).CornerRadius = UDim.new(0, 10)
 
 local mStroke = Instance.new("UIStroke", mf)
-mStroke.Color, mStroke.Thickness, mStroke.ApplyStrokeMode = Color3.fromRGB(255, 85, 85), 2, Enum.ApplyStrokeMode.Border
+mStroke.Color, mStroke.Thickness, mStroke.ApplyStrokeMode = goldRenk, 2, Enum.ApplyStrokeMode.Border
 
 local tl = Instance.new("TextLabel", mf)
-tl.Size, tl.Position, tl.Text, tl.BackgroundTransparency, tl.TextColor3, tl.Font, tl.TextSize = UDim2.new(1, 0, 0, 35), UDim2.new(0, 0, 0, 0), "⚡ ACE V2 ⚡", 1, Color3.new(1, 1, 1), Enum.Font.GothamBlack, 18
+tl.Size, tl.Position, tl.Text, tl.BackgroundTransparency, tl.TextColor3, tl.Font, tl.TextSize = UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 0), "👑 ACE V2 PREMIUM+ 👑", 1, goldRenk, Enum.Font.GothamBlack, 18
+
+local line = Instance.new("Frame", mf)
+line.Size, line.Position, line.BackgroundColor3, line.BorderSizePixel = UDim2.new(0.9, 0, 0, 1), UDim2.new(0.05, 0, 0, 40), goldRenk, 0
 
 local btnContainer = Instance.new("Frame", mf)
-btnContainer.Size, btnContainer.Position, btnContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -45), UDim2.new(0, 10, 0, 35), 1
+btnContainer.Size, btnContainer.Position, btnContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -55), UDim2.new(0, 10, 0, 48), 1
 btnContainer.Active = false
 
 local grid = Instance.new("UIGridLayout", btnContainer)
-grid.CellSize, grid.CellPadding, grid.SortOrder = UDim2.new(0, 140, 0, 35), UDim2.new(0, 10, 0, 10), Enum.SortOrder.LayoutOrder
+grid.CellSize, grid.CellPadding, grid.SortOrder = UDim2.new(0, 145, 0, 36), UDim2.new(0, 10, 0, 12), Enum.SortOrder.LayoutOrder
 
+-- AÇ/KAPA BUTONU
 local tb = Instance.new("TextButton", sg)
-tb.Size, tb.Position, tb.BackgroundColor3, tb.Text, tb.TextColor3, tb.Font, tb.TextSize = UDim2.new(0, 45, 0, 45), UDim2.new(0.5, -22, 0.02, 0), Color3.fromRGB(255, 85, 85), "X", Color3.new(1, 1, 1), Enum.Font.GothamBold, 16
+tb.Size, tb.Position, tb.BackgroundColor3, tb.Text, tb.TextColor3, tb.Font, tb.TextSize = UDim2.new(0, 45, 0, 45), UDim2.new(0.5, -22, 0.02, 0), goldRenk, "X", siyahText, Enum.Font.GothamBlack, 18
 tb.Visible = false 
 Instance.new("UICorner", tb).CornerRadius = UDim.new(1, 0)
 local tStroke = Instance.new("UIStroke", tb)
-tStroke.Color, tStroke.Thickness = Color3.fromRGB(255, 255, 255), 2
+tStroke.Color, tStroke.Thickness = beyazText, 2
 
 tb.MouseButton1Click:Connect(function()
     states.open = not states.open
     mf.Visible = states.open
     tb.Text = states.open and "X" or "ACE"
-    tb.BackgroundColor3 = states.open and Color3.fromRGB(255, 85, 85) or Color3.fromRGB(40, 200, 40)
+    tb.BackgroundColor3 = states.open and goldRenk or bgAcik
+    tb.TextColor3 = states.open and siyahText or goldRenk
 end)
 
-----------------------------------------------------------------
 -- KEY SİSTEMİ EKRANI
-----------------------------------------------------------------
 local keyFrame = Instance.new("Frame", sg)
-keyFrame.Size = UDim2.new(0, 260, 0, 140)
-keyFrame.Position = UDim2.new(0.5, -130, 0.4, 0)
-keyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0, 12)
+keyFrame.Size = UDim2.new(0, 280, 0, 150)
+keyFrame.Position = UDim2.new(0.5, -140, 0.4, 0)
+keyFrame.BackgroundColor3 = bgKoyu
+Instance.new("UICorner", keyFrame).CornerRadius = UDim.new(0, 10)
 local kStroke = Instance.new("UIStroke", keyFrame)
-kStroke.Color, kStroke.Thickness = Color3.fromRGB(255, 85, 85), 2
+kStroke.Color, kStroke.Thickness = goldRenk, 2
 
 local keyTitle = Instance.new("TextLabel", keyFrame)
-keyTitle.Size = UDim2.new(1, 0, 0, 30)
-keyTitle.Text = "ACE V2 - GİRİŞ"
+keyTitle.Size = UDim2.new(1, 0, 0, 40)
+keyTitle.Text = "💎 PREMIUM GİRİŞ"
 keyTitle.BackgroundTransparency = 1
-keyTitle.TextColor3 = Color3.new(1, 1, 1)
+keyTitle.TextColor3 = goldRenk
 keyTitle.Font = Enum.Font.GothamBlack
 keyTitle.TextSize = 16
+
+local keyLine = Instance.new("Frame", keyFrame)
+keyLine.Size, keyLine.Position, keyLine.BackgroundColor3, keyLine.BorderSizePixel = UDim2.new(0.8, 0, 0, 1), UDim2.new(0.1, 0, 0, 38), goldRenk, 0
 
 local keyBox = Instance.new("TextBox", keyFrame)
 keyBox.Size = UDim2.new(0.8, 0, 0, 35)
 keyBox.Position = UDim2.new(0.1, 0, 0.35, 0)
-keyBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-keyBox.TextColor3 = Color3.new(1, 1, 1)
-keyBox.PlaceholderText = "Key Girin..."
+keyBox.BackgroundColor3 = bgAcik
+keyBox.TextColor3 = beyazText
+keyBox.PlaceholderText = "Premium Key Girin..."
 keyBox.Font = Enum.Font.GothamSemibold
 keyBox.TextSize = 14
 keyBox.Text = ""
@@ -92,35 +106,90 @@ Instance.new("UICorner", keyBox).CornerRadius = UDim.new(0, 6)
 local keyBtn = Instance.new("TextButton", keyFrame)
 keyBtn.Size = UDim2.new(0.8, 0, 0, 35)
 keyBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
-keyBtn.BackgroundColor3 = Color3.fromRGB(40, 200, 40)
+keyBtn.BackgroundColor3 = goldRenk
 keyBtn.Text = "GİRİŞ YAP"
-keyBtn.TextColor3 = Color3.new(1, 1, 1)
-keyBtn.Font = Enum.Font.GothamBold
+keyBtn.TextColor3 = siyahText
+keyBtn.Font = Enum.Font.GothamBlack
 keyBtn.TextSize = 14
 Instance.new("UICorner", keyBtn).CornerRadius = UDim.new(0, 6)
 
+local function showKeyError(msg)
+    local oldColor = keyBox.BackgroundColor3
+    keyBox.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+    keyBox.Text = ""
+    keyBox.PlaceholderText = msg
+    task.wait(1.5)
+    keyBox.BackgroundColor3 = oldColor
+    keyBox.PlaceholderText = "Premium Key Girin..."
+    keyBtn.Text = "GİRİŞ YAP"
+end
+
+-- YENİ: SÜRE VE KİŞİ KONTROLLÜ CANLI GITHUB SİSTEMİ
 keyBtn.MouseButton1Click:Connect(function()
-    if keyBox.Text == "AceKilloki" then
-        keyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-        keyBtn.Text = "BAŞARILI!"
-        task.wait(0.5)
-        keyFrame:Destroy() 
-        mf.Visible = true 
-        tb.Visible = true 
+    if keyBox.Text == "" then return end
+    keyBtn.Text = "KONTROL EDİLİYOR..."
+    
+    local success, keysData = pcall(function() return game:HttpGet(keysLink) end)
+
+    if success then
+        local found = false
+        local errorMsg = "GEÇERSİZ KEY!"
+        
+        -- Github'daki her satırı kontrol et
+        for line in string.gmatch(keysData, "[^\r\n]+") do
+            -- Dik çizgiye (|) göre kelimeleri ayır
+            local parts = string.split(line, "|")
+            local k_pass = parts[1]
+            local k_user = parts[2]
+            local k_date = parts[3]
+
+            if keyBox.Text == k_pass then
+                found = true
+                
+                -- 1. KULLANICI KONTROLÜ (Başka hesaptan girilmiş mi?)
+                if k_user and k_user ~= "ALL" and p.Name ~= k_user then
+                    found = false
+                    errorMsg = "BU KEY BAŞKASINA AİT!"
+                    break
+                end
+
+                -- 2. SÜRE KONTROLÜ (Tarihi geçmiş mi?)
+                if k_date and k_date ~= "SINIRSIZ" then
+                    local y, m, d = string.match(k_date, "(%d+)-(%d+)-(%d+)")
+                    if y and m and d then
+                        -- Hedef tarihi hesapla
+                        local expireTime = os.time({year=y, month=m, day=d})
+                        -- Eğer şu anki zaman, hedef zamanı geçmişse
+                        if os.time() > expireTime then
+                            found = false
+                            errorMsg = "KEY SÜRESİ DOLMUŞ!"
+                            break
+                        end
+                    end
+                end
+
+                break -- Her şey doğruysa döngüden çık
+            end
+        end
+
+        if found then
+            keyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            keyBtn.Text = "ERİŞİM ONAYLANDI"
+            task.wait(0.5)
+            keyFrame:Destroy() 
+            mf.Visible = true 
+            tb.Visible = true 
+        else
+            showKeyError(errorMsg)
+        end
     else
-        local oldColor = keyBox.BackgroundColor3
-        keyBox.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        keyBox.Text = ""
-        keyBox.PlaceholderText = "YANLIŞ KEY!"
+        keyBtn.Text = "BAĞLANTI HATASI!"
         task.wait(1)
-        keyBox.BackgroundColor3 = oldColor
-        keyBox.PlaceholderText = "Key Girin..."
+        keyBtn.Text = "GİRİŞ YAP"
     end
 end)
 
-----------------------------------------------------------------
--- HİLE SİSTEMLERİ VE MANTIĞI
-----------------------------------------------------------------
+-- SÜRÜKLEME
 local drag, dragStart, startPos
 mf.InputBegan:Connect(function(i)
     if i.UserInputType.Name:match("MouseButton1") or i.UserInputType.Name:match("Touch") then
@@ -137,19 +206,21 @@ end)
 
 local function upBtn(b, st, isim)
     if st then
-        b.BackgroundColor3 = Color3.fromRGB(30, 160, 40)
-        b.Text = "🟢 " .. isim .. " [AÇIK]"
-        b.UIStroke.Color = Color3.fromRGB(0, 255, 0)
+        b.BackgroundColor3 = goldRenk
+        b.Text = isim .. " [ON]"
+        b.TextColor3 = siyahText
+        b.UIStroke.Color = goldRenk
     else
-        b.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-        b.Text = "🔴 " .. isim .. " [KAPALI]"
-        b.UIStroke.Color = Color3.fromRGB(255, 80, 80)
+        b.BackgroundColor3 = bgAcik
+        b.Text = isim .. " [OFF]"
+        b.TextColor3 = beyazText
+        b.UIStroke.Color = Color3.fromRGB(60, 60, 65)
     end
 end
 
 local function mkBtn(isim, ord)
     local b = Instance.new("TextButton", btnContainer)
-    b.Font, b.TextSize, b.TextColor3, b.LayoutOrder = Enum.Font.GothamBold, 12, Color3.new(1, 1, 1), ord
+    b.Font, b.TextSize, b.LayoutOrder = Enum.Font.GothamBold, 12, ord
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
     local bs = Instance.new("UIStroke", b)
     bs.Thickness, bs.ApplyStrokeMode = 1, Enum.ApplyStrokeMode.Border
@@ -157,6 +228,7 @@ local function mkBtn(isim, ord)
     return b
 end
 
+-- STANDART HİLELER
 local function toggleFly(st)
     states.fly = st
     local c = p.Character
@@ -198,20 +270,11 @@ local function toggleHitbox(st)
     end
 end
 
-local function toggleSpeed(st)
-    states.speed = st
-    if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
-        p.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = st and hizliKosmaGucu or 16
-    end
-end
-
 local function toggleFastE(st)
     states.fastE = st
     if st then
         for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                v.HoldDuration = 0
-            end
+            if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end
         end
     end
 end
@@ -223,6 +286,25 @@ end)
 uis.JumpRequest:Connect(function()
     if states.infJump and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
         p.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- AUTO COLLECT
+task.spawn(function()
+    while task.wait(0.5) do
+        if states.autoCollect and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("TouchTransmitter") then
+                    local part = v.Parent
+                    if part and part:IsA("BasePart") then
+                        if firetouchinterest then
+                            firetouchinterest(p.Character.HumanoidRootPart, part, 0)
+                            firetouchinterest(p.Character.HumanoidRootPart, part, 1)
+                        end
+                    end
+                end
+            end
+        end
     end
 end)
 
@@ -259,12 +341,9 @@ rs.Stepped:Connect(function()
             end
         end
     end
-    if states.speed and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
-        p.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = hizliKosmaGucu
-    end
 end)
 
--- BUTON BAĞLANTILARI
+-- BUTONLARI OLUŞTURMA (8 Buton - Simetrik)
 local fBtn = mkBtn("FLY", 1)
 fBtn.MouseButton1Click:Connect(function() toggleFly(not states.fly) upBtn(fBtn, states.fly, "FLY") end)
 
@@ -280,92 +359,43 @@ aBtn.MouseButton1Click:Connect(function() states.aura = not states.aura; upBtn(a
 local jBtn = mkBtn("INF JUMP", 5)
 jBtn.MouseButton1Click:Connect(function() states.infJump = not states.infJump; upBtn(jBtn, states.infJump, "INF JUMP") end)
 
-local sBtn = mkBtn("SPEED", 6)
-sBtn.MouseButton1Click:Connect(function() toggleSpeed(not states.speed) upBtn(sBtn, states.speed, "SPEED") end)
-
-local feBtn = mkBtn("FAST E", 7)
+local feBtn = mkBtn("FAST E", 6)
 feBtn.MouseButton1Click:Connect(function() toggleFastE(not states.fastE) upBtn(feBtn, states.fastE, "FAST E") end)
 
--- YAKIN TP BUTONU
-local cTpBtn = Instance.new("TextButton", btnContainer)
-cTpBtn.Font, cTpBtn.TextSize, cTpBtn.TextColor3, cTpBtn.LayoutOrder = Enum.Font.GothamBold, 12, Color3.new(1, 1, 1), 8
-cTpBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 200) 
-cTpBtn.Text = "🎯 YAKIN TP"
-Instance.new("UICorner", cTpBtn).CornerRadius = UDim.new(0, 6)
-local cTpStroke = Instance.new("UIStroke", cTpBtn)
-cTpStroke.Color, cTpStroke.Thickness, cTpStroke.ApplyStrokeMode = Color3.fromRGB(200, 100, 255), 1, Enum.ApplyStrokeMode.Border
+local acBtn = mkBtn("AUTO COLLECT", 7)
+acBtn.MouseButton1Click:Connect(function() states.autoCollect = not states.autoCollect; upBtn(acBtn, states.autoCollect, "AUTO COLLECT") end)
 
-cTpBtn.MouseButton1Click:Connect(function()
-    if not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
-    local closestPlayer, shortestDistance, myPos = nil, math.huge, p.Character.HumanoidRootPart.Position
-    for _, pl in pairs(game:GetService("Players"):GetPlayers()) do
-        if pl ~= p and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (pl.Character.HumanoidRootPart.Position - myPos).Magnitude
-            if dist < shortestDistance then shortestDistance, closestPlayer = dist, pl end
-        end
-    end
-    if closestPlayer then p.Character.HumanoidRootPart.CFrame = closestPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0) end
-    cTpBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-    task.wait(0.1)
-    cTpBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 200)
-end)
-
--- İLERİ TP BUTONU
-local tpBtn = Instance.new("TextButton", btnContainer)
-tpBtn.Font, tpBtn.TextSize, tpBtn.TextColor3, tpBtn.LayoutOrder = Enum.Font.GothamBold, 12, Color3.new(1, 1, 1), 9
-tpBtn.BackgroundColor3 = Color3.fromRGB(40, 100, 200)
-tpBtn.Text = "⏩ İLERİ TP"
-Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 6)
-local tpStroke = Instance.new("UIStroke", tpBtn)
-tpStroke.Color, tpStroke.Thickness, tpStroke.ApplyStrokeMode = Color3.fromRGB(100, 150, 255), 1, Enum.ApplyStrokeMode.Border
-
-tpBtn.MouseButton1Click:Connect(function()
-    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-        p.Character.HumanoidRootPart.CFrame += p.Character.HumanoidRootPart.CFrame.LookVector * tpDist
-    end
-    tpBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-    task.wait(0.1)
-    tpBtn.BackgroundColor3 = Color3.fromRGB(40, 100, 200)
-end)
-
--- YENİ: FPS BOOST BUTONU
 local fpsBtn = Instance.new("TextButton", btnContainer)
-fpsBtn.Font, fpsBtn.TextSize, fpsBtn.TextColor3, fpsBtn.LayoutOrder = Enum.Font.GothamBold, 12, Color3.new(1, 1, 1), 10
-fpsBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 40) -- Turuncu renk
+fpsBtn.Font, fpsBtn.TextSize, fpsBtn.TextColor3, fpsBtn.LayoutOrder = Enum.Font.GothamBold, 12, beyazText, 8
+fpsBtn.BackgroundColor3 = bgAcik 
 fpsBtn.Text = "🚀 FPS BOOST"
 Instance.new("UICorner", fpsBtn).CornerRadius = UDim.new(0, 6)
 local fpsStroke = Instance.new("UIStroke", fpsBtn)
-fpsStroke.Color, fpsStroke.Thickness, fpsStroke.ApplyStrokeMode = Color3.fromRGB(255, 150, 50), 1, Enum.ApplyStrokeMode.Border
+fpsStroke.Color, fpsStroke.Thickness = Color3.fromRGB(100, 100, 100), 1
 
 fpsBtn.MouseButton1Click:Connect(function()
     local l = game:GetService("Lighting")
     local t = workspace:FindFirstChildOfClass("Terrain")
-    
     l.GlobalShadows = false
     for _, v in pairs(l:GetDescendants()) do
         if v:IsA("PostEffect") or v:IsA("Atmosphere") or v:IsA("Sky") then v:Destroy() end
     end
-    if t then
-        t.WaterWaveSize, t.WaterWaveSpeed, t.WaterReflectance, t.WaterTransparency = 0, 0, 0, 0
-    end
+    if t then t.WaterWaveSize, t.WaterWaveSpeed, t.WaterReflectance, t.WaterTransparency = 0, 0, 0, 0 end
     for _, v in pairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") then
             v.Material = Enum.Material.SmoothPlastic
             v.Reflectance = 0
             v.CastShadow = false
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            v:Destroy()
-        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-            v.Enabled = false
-        end
+        elseif v:IsA("Decal") or v:IsA("Texture") then v:Destroy()
+        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then v.Enabled = false end
     end
-    
     fpsBtn.Text = "✅ BOOSTLANDI"
-    fpsBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    fpsStroke.Color = Color3.fromRGB(50, 50, 50)
+    fpsBtn.BackgroundColor3 = goldRenk
+    fpsBtn.TextColor3 = siyahText
+    fpsStroke.Color = goldRenk
 end)
 
 p.CharacterAdded:Connect(function() 
     if states.fly then toggleFly(true) end 
-    if states.speed then toggleSpeed(true) end
 end)
+
