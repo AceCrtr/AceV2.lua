@@ -6,8 +6,9 @@ local pps = game:GetService("ProximityPromptService")
 local cam = workspace.CurrentCamera
 
 ----------------------------------------------------------------
--- ⚠️ DİKKAT: BURAYA KENDİ KEYS.TXT RAW LİNKİNİ YAPIŞTIR! ⚠️
+-- ⚠️ DİKKAT: AŞAĞIDAKİ İKİ LİNKİ KENDİ LİNKLERİNLE DEĞİŞTİR! ⚠️
 local keysLink = "https://raw.githubusercontent.com/AceCrtr/AceV2.lua/refs/heads/main/keys.txt"
+local webhookLink = "https://discord.com/api/webhooks/1476166591342444554/WNNYQG_0cEC8MvRjSc5z7Hu2gUcy6BEHt-FCLbFRmnog-Ra9r_cGbRehTyRQnHvA6wXM"
 ----------------------------------------------------------------
 
 local spd = 250
@@ -124,7 +125,34 @@ local function showKeyError(msg)
     keyBtn.Text = "GİRİŞ YAP"
 end
 
--- YENİ: SÜRE VE KİŞİ KONTROLLÜ CANLI GITHUB SİSTEMİ
+-- DISCORD WEBHOOK GÖNDERME FONKSİYONU
+local function sendWebhookLog(usedKey)
+    if webhookLink == "" or not string.match(webhookLink, "discord") then return end
+    
+    local data = {
+        ["embeds"] = {{
+            ["title"] = "🚀 ACE V2 PREMIUM+ | YENİ GİRİŞ!",
+            ["description"] = "**👤 Oyuncu:** `" .. p.Name .. "`\n**🔑 Kullanılan Key:** `" .. usedKey .. "`\n**🎮 Oyun ID:** `" .. game.PlaceId .. "`",
+            ["color"] = tonumber(0xFFD700) 
+        }}
+    }
+    
+    local jsonData = game:GetService("HttpService"):JSONEncode(data)
+    local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+    
+    if requestFunc then
+        pcall(function()
+            requestFunc({
+                Url = webhookLink,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = jsonData
+            })
+        end)
+    end
+end
+
+-- SÜRE VE KİŞİ KONTROLLÜ GITHUB SİSTEMİ
 keyBtn.MouseButton1Click:Connect(function()
     if keyBox.Text == "" then return end
     keyBtn.Text = "KONTROL EDİLİYOR..."
@@ -135,9 +163,7 @@ keyBtn.MouseButton1Click:Connect(function()
         local found = false
         local errorMsg = "GEÇERSİZ KEY!"
         
-        -- Github'daki her satırı kontrol et
         for line in string.gmatch(keysData, "[^\r\n]+") do
-            -- Dik çizgiye (|) göre kelimeleri ayır
             local parts = string.split(line, "|")
             local k_pass = parts[1]
             local k_user = parts[2]
@@ -146,20 +172,16 @@ keyBtn.MouseButton1Click:Connect(function()
             if keyBox.Text == k_pass then
                 found = true
                 
-                -- 1. KULLANICI KONTROLÜ (Başka hesaptan girilmiş mi?)
                 if k_user and k_user ~= "ALL" and p.Name ~= k_user then
                     found = false
                     errorMsg = "BU KEY BAŞKASINA AİT!"
                     break
                 end
 
-                -- 2. SÜRE KONTROLÜ (Tarihi geçmiş mi?)
                 if k_date and k_date ~= "SINIRSIZ" then
                     local y, m, d = string.match(k_date, "(%d+)-(%d+)-(%d+)")
                     if y and m and d then
-                        -- Hedef tarihi hesapla
                         local expireTime = os.time({year=y, month=m, day=d})
-                        -- Eğer şu anki zaman, hedef zamanı geçmişse
                         if os.time() > expireTime then
                             found = false
                             errorMsg = "KEY SÜRESİ DOLMUŞ!"
@@ -167,14 +189,19 @@ keyBtn.MouseButton1Click:Connect(function()
                         end
                     end
                 end
-
-                break -- Her şey doğruysa döngüden çık
+                break 
             end
         end
 
         if found then
             keyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
             keyBtn.Text = "ERİŞİM ONAYLANDI"
+            
+            -- GİRİŞ BAŞARILIYSA DISCORD'A MESAJ GÖNDER
+            task.spawn(function()
+                sendWebhookLog(keyBox.Text)
+            end)
+
             task.wait(0.5)
             keyFrame:Destroy() 
             mf.Visible = true 
@@ -343,7 +370,7 @@ rs.Stepped:Connect(function()
     end
 end)
 
--- BUTONLARI OLUŞTURMA (8 Buton - Simetrik)
+-- BUTONLARI OLUŞTURMA
 local fBtn = mkBtn("FLY", 1)
 fBtn.MouseButton1Click:Connect(function() toggleFly(not states.fly) upBtn(fBtn, states.fly, "FLY") end)
 
